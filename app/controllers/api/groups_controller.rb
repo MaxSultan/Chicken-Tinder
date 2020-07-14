@@ -1,11 +1,22 @@
 class Api::GroupsController < ApplicationController
   before_action :set_group, only: [:destroy]
+  
   def index
     render json: Group.all
   end
 
   def create 
     group = Group.new(group_params)
+
+    if group.save
+      render json: group
+    else
+      render json: {errors: groups.errors, status: 422}
+    end
+  end
+
+  def update
+    group = Group.find(params[:id]).update(group_params)
 
     if group.save
       render json: group
@@ -29,7 +40,7 @@ class Api::GroupsController < ApplicationController
   end
 
   def group_params
-    params.require(:group).permit(:name)
+    params.require(:group).permit(:name, :match_number)
   end
 
 end

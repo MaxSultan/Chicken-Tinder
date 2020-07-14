@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import { Link, Redirect } from 'react-router-dom'
+import { Redirect } from 'react-router-dom'
 import Axios from 'axios'
 import HomeLogo from './HomeLogo'
 
@@ -18,10 +18,9 @@ export default function Home(props) {
         console.log('create group')
         const code = generateCode()
         console.log(code)
-        Axios.post('api/groups', {name: code})
+        Axios.post('api/groups', {name: code })
         .then(res => {
             setGroupCode(res.data.name)
-            // props.history.push(`/CreateUser`)
             setAddingUser(true)
         })
         .catch(err => console.log(err))

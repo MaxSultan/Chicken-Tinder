@@ -7,23 +7,14 @@ import CodeDisplay from './CodeDisplay'
 import Menu from './Menu'
 
 export default function Swipe(props) {
-    const code = props.location.state.code
-    const username = props.location.state.username
+    const { code, username, } = props.location.state
+    const [matchNum, setMatchNum] = useState(props.location.state.matchNum)
     const [groupId, setGroupId] = useState(props.location.state.groupId)
     const [restaurants, setRestaurants] = useState([])
     const [currentRestaurant, setCurrentRestaurant] = useState('')
     const [weMatched, setWeMatched] = useState(false)
-    const [count, setCount] = useState(0)
-    const [likes, setLikes] = useState([])
+    const [count, setCount] = useState(1)
     const [showMenu, setShowMenu] = useState(false)
-    const [users, setUsers] = useState([])
-
-
-    const getUsers = () => {
-        Axios.get(`/api/groups/${groupId}/users`)
-        .then(res => console.log(res))
-        .catch(err=> console.log(err))
-    }
 
     const getRestaurants = () => {
         Axios.get('api/restaurants')
@@ -39,8 +30,9 @@ export default function Swipe(props) {
             Axios.get(`/api/groups`)
             .then(res => {
                 const correctGroup = res.data.filter(group => group.name ===`${code}`)
+                console.log(correctGroup)
                 setGroupId(correctGroup[0].id)
-                console.log(res)
+                setMatchNum(correctGroup[0].match_number)
             })
             .catch(err => console.log(err))
         } else {
@@ -49,9 +41,8 @@ export default function Swipe(props) {
     }
 
     useEffect(()=> {
-        getRestaurants()
         getGroupId()
-        getLikes()
+        getRestaurants()
     },[])
 
     // search for the one i just liked
@@ -68,7 +59,7 @@ export default function Swipe(props) {
             console.log(res.data)
             if(res.data.length > 0){
                 const match = res.data.filter(r => {
-                    return r.likedcount > 1
+                    return r.likedcount = matchNum
                 })
                 return match.length > 0 ? setWeMatched(!weMatched) : setCount(count + 1)
             }
@@ -78,7 +69,7 @@ export default function Swipe(props) {
     const likeRestaurnt = () => {
         Axios.get(`/api/groups/${groupId}/liked_restaurants/`)
         .then(res => {
-        const match = res.data.filter(l => l.restaurant_id == currentRestaurant.id)
+        const match = res.data.filter(l => l.restaurant_id === currentRestaurant.id)
         console.log('match filter returned:', match)
             if (match.length > 0){
                 updateLike(match[0].id)
@@ -89,30 +80,42 @@ export default function Swipe(props) {
         checkMatches()
     }
 
-    const getLikes = () => {
-        Axios.get(`/api/groups/${groupId}/liked_restaurants`)
-        .then(res => {
-            setLikes(res.data)
-            return res.data
+    const updateBackend = (id, newLikedCount) => {
+        Axios.put(
+            `/api/groups/${groupId}/liked_restaurants/${id}`,
+            { likedcount: newLikedCount, group_id: groupId, restaurant_id: currentRestaurant.id }
+        )
+        .then(res2 => {
+            console.log(newLikedCount, 'likes!', res2)
+            if (newLikedCount === matchNum) setWeMatched(!weMatched)
         })
         .catch(err => console.log(err))
     }
 
 
     const updateLike = (id) => {
-        Axios.put(
-            `/api/groups/${groupId}/liked_restaurants/${id}`,
-            { likedcount: 2, group_id: groupId, restaurant_id: currentRestaurant.id }
-        )
-        .then(res2 => {
-            console.log('2likes!', res2)
-            setWeMatched(!weMatched)
-        })
-        .catch(err => console.log(err))
+        switch(Axios.get(`/api/groups/${groupId}/liked_restaurants/${id}`).then(res => res.data[0].likedcount)){
+            case 1:
+                updateBackend(id, 2)
+                break;
+            case 2:
+                updateBackend(id, 3)
+                break;
+            case 3:
+                updateBackend(id, 4)
+                break;
+            case 4:
+                updateBackend(id, 5)
+                break;
+            case 5:
+                updateBackend(id, 6)
+                break;
+        }
+        setCount(count + 1)
+        setCurrentRestaurant(restaurants[count])
     }
 
     const createLike = () => {
-        getLikes()
         Axios.post(
             `/api/groups/${groupId}/liked_restaurants/`,
             { likedcount: 1, group_id: groupId, restaurant_id: currentRestaurant.id }
@@ -126,9 +129,9 @@ export default function Swipe(props) {
     }
 
     const likeButton = () => {
+        console.log('matchnumber in state:',matchNum)
         likeRestaurnt()
         checkMatches()
-        getUsers()
     }
 
     //disliking
@@ -139,14 +142,15 @@ export default function Swipe(props) {
     // if not increase the number of the viewed restaurant
 
     const dislikeRestaurant = () => {
+        console.log('matchnumber in state:',matchNum)
     Axios.get(`/api/groups/${groupId}/liked_restaurants`)
         .then(res => {
-            console.log(res.data)
+            console.log('liked restaurants:',res.data)
             //see if there are any liked restaurants with likedcount = # of group members
             if(res.data.length > 0){
             const match = res.data.filter(r => {
                 console.log(r.likedcount)
-                return r.likedcount > 1
+                return r.likedcount = matchNum
             })
             return (match.length > 0 ? setWeMatched(!weMatched) :  setCount(count + 1), setCurrentRestaurant(restaurants[count]))
             //if so set we matched to true and pass the id of the matched restaurant
@@ -156,24 +160,23 @@ export default function Swipe(props) {
             }
         })
         .catch(err => console.log(err))
-        getUsers()
     }
 
-    return (
+    if(count <= restaurants.length){ return (
         <div>
             <CodeDisplay code={code}/>
             <div style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
                 <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', border:'3px solid black', borderRadius:'30px'}}>
                     <h1 style={{margin:'10px'}}>{currentRestaurant.name}</h1>
-                    <img src={currentRestaurant.image} style={{margin:'10px', maxHeight:'300px'}}/>
+                    <img src={currentRestaurant.image} alt='restaurant food' style={{margin:'10px', maxHeight:'300px'}}/>
                     <h3 style={{margin:'20px'}}>Cuisine: {currentRestaurant.cuisine}</h3>
                     <div style={{display:'flex', margin:'20px'}}>
-                        <button onClick={() => dislikeRestaurant()}><img src={down}/></button>
+                        <button onClick={() => dislikeRestaurant()}><img src={down} alt='thumbs down'/></button>
                         <div style={{width:'30px'}}/>
                         <button onClick={() => setShowMenu(!showMenu)}>View Menu</button>
                         
                         <div style={{width:'30px'}}/>
-                        <button onClick={() => likeButton()}><img src={up}/></button>
+                        <button onClick={() => likeButton()}><img src={up} alt='thumbs up'/></button>
                         {weMatched && <Redirect to={{
                     pathname: '/Match',
                     state: { 
@@ -181,6 +184,7 @@ export default function Swipe(props) {
                         username: username,
                         groupId: groupId,
                         restaurant_id: currentRestaurant.id,
+                        matchNum: matchNum,
                     }}
                     }
                     />}
@@ -190,4 +194,12 @@ export default function Swipe(props) {
             {showMenu && <Menu name={currentRestaurant.name} showMenu={showMenu} setShowMenu={setShowMenu} items={currentRestaurant.menu_items}/>}
         </div>
     )
+    }else{
+         return( 
+            <div>
+                <CodeDisplay code={code}/>
+                <h3>No More restaurants</h3>
+            </div>
+         )
+    }
 }

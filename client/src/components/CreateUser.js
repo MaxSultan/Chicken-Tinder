@@ -8,6 +8,7 @@ export default function CreateUser(props) {
     const [username, setUsername] = useState('')
     const [swipe, setSwipe] = useState(false)
     const [groupId, setGroupId] = useState('')
+    const [matchNum, setMatchNum] = useState(0)
 
     async function getGroupId(){
          //get the group id by passing the group code to the backend
@@ -15,13 +16,11 @@ export default function CreateUser(props) {
          const res = await Axios.get(`/api/groups`)
              const id = res.data.filter(group => group.name ===`${code}`)
              setGroupId(id[0].id)
-             const hardCodedGroupId = id[0].id
-            // why cant we use groupId from state in create user here??
          } catch(err){console.log(err)}
     }
     useEffect(() => {
         getGroupId()
-    },[])
+    },[code])
 
     const createUser = (group_id) => {
         console.log('create user called')
@@ -32,8 +31,15 @@ export default function CreateUser(props) {
         .catch(err => console.log(err))
     }
 
+    const updateGroup = (group_id) => {
+        Axios.put(`/api/groups/${group_id}`, {name: code, match_number: matchNum})
+        .then(res => console.log(res))
+        .catch(err=> console.log(err))
+    }
+
     async function handleSubmit(e){
         e.preventDefault()
+        updateGroup(groupId)
         createUser(groupId)
     }
 
@@ -49,6 +55,18 @@ export default function CreateUser(props) {
                 onChange={(e) => setUsername(e.target.value)}
                 style={styles.input}
                 />
+                <label style={{padding:'10px'}}>Enter the number of group members that need to like a restaurant before a match is created</label>
+                 <select
+                value={matchNum}
+                onChange={(e) => setMatchNum(e.target.value)}
+                style={styles.input}>
+                    <option value={2}>2</option>
+                    <option value={3}>3</option>
+                    <option value={4}>4</option>
+                    <option value={5}>5</option>
+                    <option value={6}>6</option>
+                </select>
+
                 <button type='submit' style={styles.button}>Start Swiping</button>
             </form>
             {swipe && <Redirect to={{
@@ -57,6 +75,7 @@ export default function CreateUser(props) {
                     code: code,
                     username: username,
                     groupId: groupId,
+                    matchNum: matchNum,
                  }
             }}/>}
         </div>

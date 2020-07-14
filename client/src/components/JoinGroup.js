@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { Link, Redirect } from 'react-router-dom'
+import { Redirect } from 'react-router-dom'
 import Axios from "axios"
 
 export default function JoinGroup(props) {
-    const code = props.location.state.code
     const [user, setUser] = useState("");
     const [groupCode, setGroupCode] = useState("");
     const [groupId, setGroupId] = useState("")
@@ -69,7 +68,7 @@ export default function JoinGroup(props) {
                     onChange={(e) => setGroupCode(e.target.value)}
                     style={styles.input}
                     />
-                <button style={styles.button} type="Submit">Start Swiping!</button>
+                <button style={styles.button} type="submit">Start Swiping!</button>
             </form>
             {swipe && <Redirect to={{
                 pathname: '/Swipe',
