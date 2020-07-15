@@ -48,7 +48,6 @@ export default function Swipe(props) {
     // search for the one i just liked
     // if it exists update the likedcount to two and set we matched to true
     // if it doesnt exist create a liked restaurant and increment count
-
     // then get all likes and see if any have been liked by everyone
         //if any have set weMatched to true
         // if not increment count by one
@@ -67,6 +66,7 @@ export default function Swipe(props) {
     }
 
     const likeRestaurant = () => {
+        debugger
         Axios.get(`/api/groups/${groupId}/liked_restaurants/`)
         .then(res => {
         const match = res.data.filter(l => l.restaurant_id === currentRestaurant.id)
@@ -80,21 +80,31 @@ export default function Swipe(props) {
         checkMatches()
     }
 
+    //this function makes all likedcount fields undefined
+    //matchnum is undefined in state on those who joined the group
     const updateBackend = (id, newLikedCount) => {
+        console.log('about to update backend with id:', id)
+        console.log('the new likedcount will be:', newLikedCount)
         Axios.put(
             `/api/groups/${groupId}/liked_restaurants/${id}`,
-            { likedcount: newLikedCount, group_id: groupId, restaurant_id: currentRestaurant.id }
+            { likedcount: newLikedCount.parseInt(), group_id: groupId, restaurant_id: currentRestaurant.id }
         )
         .then(res2 => {
-            console.log(newLikedCount, 'likes!', res2)
+
+            console.log(newLikedCount, 'likes!', res2.data)
             if (newLikedCount === matchNum) setWeMatched(!weMatched)
         })
         .catch(err => console.log(err))
     }
 
-
     const updateLike = (id) => {
-        switch(Axios.get(`/api/groups/${groupId}/liked_restaurants/${id}`).then(res => res.data[0].likedcount)){
+        debugger
+        switch(Axios.get(`/api/groups/${groupId}/liked_restaurants/${id}`)
+        .then(res => {
+            console.log('likecount before update', res.data[0].likedcount)
+            return res.data[0].likedcount})
+        )
+        {
             case 1:
                 updateBackend(id, 2)
                 break;

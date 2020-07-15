@@ -10,7 +10,6 @@ export default function JoinGroup(props) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Axios.post(`/api/groups`)
         getGroupId();
         if(groupCode.match(/#[0-9][0-9][0-9][0-9][0-9][0-9]/) === null) {
             alert('Code was the wrong format. Please check your code and try again')
@@ -18,7 +17,6 @@ export default function JoinGroup(props) {
         } 
         if (groupId === '') return 
         setSwipe(!swipe)
-
     }
 
     const getGroupId = () => {
@@ -29,24 +27,19 @@ export default function JoinGroup(props) {
            if(groupObj.length > 0) {
             setGroupId(groupObj[0].id)
             addUser(groupObj[0].id);
+            setSwipe(!swipe)
             } else {
                 alert('Your code did not match a known group code') 
                return;
             }
         })
-        .catch ((err) => {
-            console.log(err)
-        })
+        .catch(err => console.log(err))
     }
 
-    const addUser = (groupId) => {
-        Axios.post(`api/groups/${groupId}/users`, {username: user})
-        .then( (res) => {
-            console.log(res.data)
-         } )
-        .catch( (err) => {
-            console.log(err)
-        })
+    const addUser = (group_id) => {
+        Axios.post(`api/groups/${group_id}/users`, {username: user})
+        .then((res) => console.log('user added:', res.data))
+        .catch( (err) => console.log(err))
     }
 
     return (

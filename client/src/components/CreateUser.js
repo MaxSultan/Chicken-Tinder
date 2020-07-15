@@ -60,7 +60,7 @@ export default function CreateUser(props) {
                 value={matchNum}
                 onChange={(e) => setMatchNum(e.target.value)}
                 style={styles.input}>
-                    <option value={2}>2</option>
+                    <option selected value={2}>2</option>
                     <option value={3}>3</option>
                     <option value={4}>4</option>
                     <option value={5}>5</option>
